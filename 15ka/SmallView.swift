@@ -10,19 +10,17 @@ import UIKit
 
 class SmallView: UIView {
 
-    var myPosition: (Int, Int)
+    var position: Position
+    var moveableX = false
+    var moveableY = false
     
-    init(frame: CGRect, withPosition pos: (Int, Int)) {
-        self.myPosition = pos
-        super.init(frame: frame)
+    init(_ tempFrame: CGRect, withPosition pos: Position) {
+        self.position = pos
+        super.init(frame: tempFrame)
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-    
-    func makeBlank() {
-        
     }
     
     func makeVisible() {
