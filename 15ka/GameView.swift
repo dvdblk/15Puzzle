@@ -21,6 +21,7 @@ class GameView: UIView {
     var blankPosition: Position!
     var selectedView: SmallView?
     var touchPoint: CGPoint!
+    var ratio: CGFloat!
 
     func prepare() {
         self.singleFrameOrigin = (bounds.size.width - self.padding) / CGFloat(gameSize) - padding
@@ -66,23 +67,44 @@ class GameView: UIView {
             }
         case .Changed:
             // move in one axis only
-            if let tempSelectedView = self.selectedView {
+            if let tempSelectedView = self.selectedView as SmallView? {
+                let globalOffset = rec.locationInView(self)
                 if tempSelectedView.moveableX {
+                    self.ratio = (globalOffset.x-touchPoint.x-tempSelectedView.originalFrame.origin.x)/(self.singleFrameOrigin+self.padding)
+                    self.ratio = max(min(1, ratio), 0)
+                    var newFrame: CGRect!
                     if self.blankPosition.0 > tempSelectedView.position.0 {
-                        let globalOffset = rec.locationInView(self)
-                        var ratio = (globalOffset.x - self.touchPoint.x) / (self.singleFrameOrigin + padding)
-                        ratio = max(min(1, ratio), 0)
-                        var newFrame = tempSelectedView.frame
-                        newFrame.origin.x += newFrame.origin.x*ratio
-                        tempSelectedView.frame = newFrame
+                        newFrame = CGRect(origin: CGPoint(x: tempSelectedView.originalFrame.origin.x + self.ratio*(self.singleFrameOrigin+self.padding), y: tempSelectedView.frame.origin.y), size: tempSelectedView.frame.size)
+                    } else {
+                        self.ratio =
+                        newFrame = CGRect(origin: CGPoint(x: tempSelectedView.originalFrame.origin.x - self.ratio*(self.singleFrameOrigin+self.padding), y: tempSelectedView.frame.origin.y), size: tempSelectedView.frame.size)
                     }
+                    tempSelectedView.frame = newFrame
                 } else if tempSelectedView.moveableY {
                     print("Y")
                 }
             }
         case .Ended:
-            selectedView?.moveableX = false
-            selectedView?.moveableY = false
+            if let tempSelectedView = self.selectedView as SmallView? {
+                tempSelectedView.moveableX = false
+                tempSelectedView.moveableY = false
+                if self.ratio >= 0.35 {
+                    // new blank position, tempSelectedView position change to previous blankPosition
+                    UIView.animateWithDuration(0.3, animations: {
+                        tempSelectedView.frame = self.frameForPosition(self.blankPosition)
+                        
+                    })
+                    let tempPos = blankPosition
+                    blankPosition = tempSelectedView.position
+                    tempSelectedView.position = tempPos
+                    tempSelectedView.originalFrame = tempSelectedView.frame
+                } else {
+                    UIView.animateWithDuration(0.25, animations: {
+                        tempSelectedView.frame = self.frameForPosition(tempSelectedView.position)
+                    })
+                }
+            }
+            
         default:
             break
         }
