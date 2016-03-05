@@ -8,7 +8,7 @@
 
 import UIKit
 
-typealias Position = (Int, Int)
+typealias Position = (x: Int, y: Int)
 
 class GameView: UIView {
 
@@ -16,12 +16,15 @@ class GameView: UIView {
     let padding: CGFloat = 2
     
     var singleFrameOrigin: CGFloat!
+    var singleFrameOriginWithPadding: CGFloat {
+        return singleFrameOrigin + padding
+    }
     var smallViewArray: [SmallView?] = []
     
     var blankPosition: Position!
     var selectedView: SmallView?
     var touchPoint: CGPoint!
-    var ratio: CGFloat!
+    var ratio: CGFloat = 0.0
 
     func prepare() {
         self.singleFrameOrigin = (bounds.size.width - self.padding) / CGFloat(gameSize) - padding
@@ -32,12 +35,12 @@ class GameView: UIView {
         for i in 0..<gameSize {
             for j in 0..<gameSize {
                 let tempFrame = self.frameForPosition((i,j))
-                let smallView = SmallView(tempFrame, withPosition: (i,j))
-                smallView.makeVisible()
+                let smallView = SmallView(tempFrame, withPosition: (i,j), withNumber: i+1+(j*gameSize))
                 self.smallViewArray.append(smallView)
                 addSubview(smallView)
             }
         }
+        // remove "blank one"
         self.smallViewArray.last?.map({$0.removeFromSuperview()})
         self.smallViewArray.removeLast()
     }
@@ -51,12 +54,12 @@ class GameView: UIView {
     func panGesture(rec: UIPanGestureRecognizer) {
         switch rec.state {
         case .Began:
-            // test if close to blank space then moveable by X/Y
+            // test if close to blank space then set moveable by X/Y
             if let tempSelectedView = hitTest(rec.locationInView(self), withEvent: nil) as? SmallView {
-                let posX = tempSelectedView.position.0
-                let posY = tempSelectedView.position.1
-                let blankX = self.blankPosition.0
-                let blankY = self.blankPosition.1
+                let posX = tempSelectedView.position.x
+                let posY = tempSelectedView.position.y
+                let blankX = self.blankPosition.x
+                let blankY = self.blankPosition.y
                 self.touchPoint = rec.locationInView(tempSelectedView)
                 if (posX+1 == blankX || posX-1 == blankX) && posY == blankY {
                     tempSelectedView.moveableX = true
@@ -69,42 +72,45 @@ class GameView: UIView {
             // move in one axis only
             if let tempSelectedView = self.selectedView as SmallView? {
                 let globalOffset = rec.locationInView(self)
+                var newFrame: CGRect = tempSelectedView.frame
                 if tempSelectedView.moveableX {
-                    self.ratio = (globalOffset.x-touchPoint.x-tempSelectedView.originalFrame.origin.x)/(self.singleFrameOrigin+self.padding)
-                    self.ratio = max(min(1, ratio), 0)
-                    var newFrame: CGRect!
-                    if self.blankPosition.0 > tempSelectedView.position.0 {
-                        newFrame = CGRect(origin: CGPoint(x: tempSelectedView.originalFrame.origin.x + self.ratio*(self.singleFrameOrigin+self.padding), y: tempSelectedView.frame.origin.y), size: tempSelectedView.frame.size)
+                    self.ratio = (globalOffset.x-touchPoint.x-tempSelectedView.originalFrame.origin.x)/self.singleFrameOriginWithPadding
+                    if self.blankPosition.x > tempSelectedView.position.x {
+                        self.ratio = max(min(1, ratio), 0)
                     } else {
-                        self.ratio =
-                        newFrame = CGRect(origin: CGPoint(x: tempSelectedView.originalFrame.origin.x - self.ratio*(self.singleFrameOrigin+self.padding), y: tempSelectedView.frame.origin.y), size: tempSelectedView.frame.size)
+                        self.ratio = max(min(0, ratio), -1)
                     }
-                    tempSelectedView.frame = newFrame
+                    newFrame = CGRect(origin: CGPoint(x: tempSelectedView.originalFrame.origin.x + self.ratio*self.singleFrameOriginWithPadding, y: tempSelectedView.frame.origin.y), size: tempSelectedView.frame.size)
                 } else if tempSelectedView.moveableY {
-                    print("Y")
+                    self.ratio = (globalOffset.y-touchPoint.y-tempSelectedView.originalFrame.origin.y)/self.singleFrameOriginWithPadding
+                    if self.blankPosition.y > tempSelectedView.position.y {
+                        self.ratio = max(min(1, ratio), 0)
+                    } else {
+                        self.ratio = max(min(0, ratio), -1)
+                    }
+                    newFrame = CGRect(origin: CGPoint(x: tempSelectedView.frame.origin.x, y: tempSelectedView.originalFrame.origin.y + self.ratio*self.singleFrameOriginWithPadding), size: tempSelectedView.frame.size)
                 }
+                tempSelectedView.frame = newFrame
             }
         case .Ended:
             if let tempSelectedView = self.selectedView as SmallView? {
                 tempSelectedView.moveableX = false
                 tempSelectedView.moveableY = false
-                if self.ratio >= 0.35 {
-                    // new blank position, tempSelectedView position change to previous blankPosition
-                    UIView.animateWithDuration(0.3, animations: {
+                if abs(self.ratio) >= 0.25 {
+                    UIView.animateWithDuration(0.2, animations: {
                         tempSelectedView.frame = self.frameForPosition(self.blankPosition)
-                        
                     })
                     let tempPos = blankPosition
                     blankPosition = tempSelectedView.position
                     tempSelectedView.position = tempPos
                     tempSelectedView.originalFrame = tempSelectedView.frame
-                } else {
-                    UIView.animateWithDuration(0.25, animations: {
+                } else if self.ratio != 0 {
+                    UIView.animateWithDuration(0.15, animations: {
                         tempSelectedView.frame = self.frameForPosition(tempSelectedView.position)
                     })
                 }
+                self.ratio = 0
             }
-            
         default:
             break
         }

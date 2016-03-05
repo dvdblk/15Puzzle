@@ -17,7 +17,6 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         gameView = GameView()
         self.view.addSubview(gameView)
-        gameView.backgroundColor = UIColor.redColor()
         gameView.translatesAutoresizingMaskIntoConstraints = false
         
         
