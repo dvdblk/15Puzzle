@@ -7,42 +7,65 @@
 //
 
 import UIKit
+import GameplayKit
 
 typealias Position = (x: Int, y: Int)
 
 class GameView: UIView {
 
-    let gameSize: Int = 5
+    let gameSize: Int = 2
     let padding: CGFloat = 2
     
     var singleFrameOrigin: CGFloat!
     var singleFrameOriginWithPadding: CGFloat {
         return singleFrameOrigin + padding
     }
-    var smallViewArray: [SmallView?] = []
+    var smallViewArray: [SmallView] = []
+    var numberArray: [Int] = []
     
     var blankPosition: Position!
     var selectedView: SmallView?
     var touchPoint: CGPoint!
     var ratio: CGFloat = 0.0
-
+    
     func prepare() {
         self.singleFrameOrigin = (bounds.size.width - self.padding) / CGFloat(gameSize) - padding
         self.blankPosition = (gameSize-1, gameSize-1)
         let pan = UIPanGestureRecognizer(target: self, action: "panGesture:")
         addGestureRecognizer(pan)
-        
+        self.randomArrayOfViews()
+    }
+    
+    func randomArrayOfViews() {
+        let arrSize = (gameSize*gameSize)-1
+        for i in 0..<arrSize {
+            numberArray.append(i+1)
+        }
+        let shuffledNumberArray = GKRandomSource.sharedRandom().arrayByShufflingObjectsInArray(numberArray) as! [Int]
+        print(shuffledNumberArray.count)
         for i in 0..<gameSize {
             for j in 0..<gameSize {
+                if i==gameSize-1 && j==gameSize-1 { break } // removes last
                 let tempFrame = self.frameForPosition((i,j))
-                let smallView = SmallView(tempFrame, withPosition: (i,j), withNumber: i+1+(j*gameSize))
+                let smallView = SmallView(tempFrame, withPosition: (i,j), withNumber: shuffledNumberArray[i+(j*gameSize)])
                 self.smallViewArray.append(smallView)
                 addSubview(smallView)
             }
         }
-        // remove "blank one"
-        self.smallViewArray.last?.map({$0.removeFromSuperview()})
-        self.smallViewArray.removeLast()
+        
+    }
+    
+    func checkIfCorrect() {
+        var tempArr: [Int] = []
+        for i in 0..<self.numberArray.count {
+            tempArr.append(self.smallViewArray[i].number)
+        }
+        if tempArr == self.numberArray {
+            print("fucking same!!!!")
+        } else {
+            print("nope")
+        }
+        print(tempArr,self.numberArray)
     }
     
     func frameForPosition(pos: Position) -> CGRect {
@@ -96,14 +119,15 @@ class GameView: UIView {
             if let tempSelectedView = self.selectedView as SmallView? {
                 tempSelectedView.moveableX = false
                 tempSelectedView.moveableY = false
-                if abs(self.ratio) >= 0.25 {
+                if abs(self.ratio) >= 0.3 {
                     UIView.animateWithDuration(0.2, animations: {
                         tempSelectedView.frame = self.frameForPosition(self.blankPosition)
                     })
-                    let tempPos = blankPosition
-                    blankPosition = tempSelectedView.position
+                    let tempPos = self.blankPosition
+                    self.blankPosition = tempSelectedView.position
                     tempSelectedView.position = tempPos
                     tempSelectedView.originalFrame = tempSelectedView.frame
+                    self.checkIfCorrect()
                 } else if self.ratio != 0 {
                     UIView.animateWithDuration(0.15, animations: {
                         tempSelectedView.frame = self.frameForPosition(tempSelectedView.position)
