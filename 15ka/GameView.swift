@@ -13,20 +13,29 @@ typealias Position = (x: Int, y: Int)
 
 class GameView: UIView {
 
-    let gameSize: Int = 2
-    let padding: CGFloat = 2
+    let gameSize: Int
+    let padding: CGFloat
     
     var singleFrameOrigin: CGFloat!
     var singleFrameOriginWithPadding: CGFloat {
         return singleFrameOrigin + padding
     }
     var smallViewArray: [SmallView] = []
-    var numberArray: [Int] = []
     
     var blankPosition: Position!
     var selectedView: SmallView?
     var touchPoint: CGPoint!
     var ratio: CGFloat = 0.0
+    
+    init(withGameSize gs: Int, withPadding padd: CGFloat = 2.0) {
+        self.gameSize = gs
+        self.padding = padd
+        super.init(frame: CGRectZero)
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     func prepare() {
         self.singleFrameOrigin = (bounds.size.width - self.padding) / CGFloat(gameSize) - padding
@@ -37,41 +46,47 @@ class GameView: UIView {
     }
     
     func randomArrayOfViews() {
-        let arrSize = (gameSize*gameSize)-1
-        for i in 0..<arrSize {
+        self.subviews.forEach({ $0.removeFromSuperview() })
+        var numberArray: [Int] = []
+        for i in 0..<(gameSize*gameSize)-1 {
             numberArray.append(i+1)
         }
         let shuffledNumberArray = GKRandomSource.sharedRandom().arrayByShufflingObjectsInArray(numberArray) as! [Int]
-        print(shuffledNumberArray.count)
-        for i in 0..<gameSize {
-            for j in 0..<gameSize {
-                if i==gameSize-1 && j==gameSize-1 { break } // removes last
+        for j in 0..<gameSize {
+            for i in 0..<gameSize {
+                if j==gameSize-1 && i==gameSize-1 { break } // removes last
                 let tempFrame = self.frameForPosition((i,j))
-                let smallView = SmallView(tempFrame, withPosition: (i,j), withNumber: shuffledNumberArray[i+(j*gameSize)])
+                let smallView = SmallView(tempFrame, withPosition: (i,j), withNumber: shuffledNumberArray[self.indexForPosition((i,j))])
                 self.smallViewArray.append(smallView)
                 addSubview(smallView)
             }
         }
-        
     }
     
     func checkIfCorrect() {
-        var tempArr: [Int] = []
-        for i in 0..<self.numberArray.count {
-            tempArr.append(self.smallViewArray[i].number)
+        var tempCorrectArr: [Int] = []
+        var tempCurrentArr: [Int] = []
+        for i in 1..<gameSize*gameSize {
+            tempCorrectArr.append(i)
         }
-        if tempArr == self.numberArray {
-            print("fucking same!!!!")
+        for i in 0..<self.smallViewArray.count {
+            tempCurrentArr.append(self.smallViewArray[i].number)
+        }
+        if tempCorrectArr == tempCurrentArr {
+            print("same!!!!")
         } else {
             print("nope")
         }
-        print(tempArr,self.numberArray)
     }
     
     func frameForPosition(pos: Position) -> CGRect {
         let orig: CGPoint =  CGPoint(x: CGFloat(pos.0)*(self.singleFrameOrigin)+CGFloat(pos.0+1)*self.padding, y: CGFloat(pos.1)*(self.singleFrameOrigin)+CGFloat(pos.1+1)*self.padding)
         let frame = CGRect(origin: orig, size: CGSize(width: self.singleFrameOrigin, height: self.singleFrameOrigin))
         return frame
+    }
+    
+    func indexForPosition(pos: Position) -> Int {
+        return pos.x + (pos.y * gameSize)
     }
     
     func panGesture(rec: UIPanGestureRecognizer) {
@@ -117,33 +132,52 @@ class GameView: UIView {
             }
         case .Ended:
             if let tempSelectedView = self.selectedView as SmallView? {
-                tempSelectedView.moveableX = false
-                tempSelectedView.moveableY = false
                 if abs(self.ratio) >= 0.3 {
                     UIView.animateWithDuration(0.2, animations: {
                         tempSelectedView.frame = self.frameForPosition(self.blankPosition)
                     })
-                    let tempPos = self.blankPosition
+                    
+                    if tempSelectedView.moveableY {
+                        for i in 0..<self.smallViewArray.count {
+                            if self.smallViewArray[i].number == tempSelectedView.number {
+                                self.smallViewArray.removeAtIndex(i)
+                                var newIndex: Int
+                                if self.ratio > 0 {
+                                    newIndex = i+self.gameSize-1
+                                } else {
+                                    newIndex = i-self.gameSize+1
+                                }
+                                self.smallViewArray.insert(tempSelectedView, atIndex: newIndex)
+                                break;
+                            }
+                        }
+                    }
+                    
+                    let tempBlankPos = self.blankPosition
                     self.blankPosition = tempSelectedView.position
-                    tempSelectedView.position = tempPos
+                    tempSelectedView.position = tempBlankPos
+                    
                     tempSelectedView.originalFrame = tempSelectedView.frame
-                    self.checkIfCorrect()
+                    if self.blankPosition.x == self.gameSize-1 && self.blankPosition.y == self.gameSize-1 {
+                        self.checkIfCorrect()
+                    }
                 } else if self.ratio != 0 {
                     UIView.animateWithDuration(0.15, animations: {
                         tempSelectedView.frame = self.frameForPosition(tempSelectedView.position)
                     })
                 }
+                tempSelectedView.moveableX = false
+                tempSelectedView.moveableY = false
                 self.ratio = 0
             }
         default:
             break
         }
-        
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        if smallViewArray.count == 0 {
+        if self.smallViewArray.count == 0 {
             prepare()
         }
     }

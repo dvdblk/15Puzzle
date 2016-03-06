@@ -12,15 +12,15 @@ class ViewController: UIViewController {
 
     var gameView: GameView!
     var constWidth: NSLayoutConstraint!
-    
+    let widthMultiplier: CGFloat = 0.95
     
     override func viewDidLoad() {
-        gameView = GameView()
+        gameView = GameView(withGameSize: 4)
         self.view.addSubview(gameView)
         gameView.translatesAutoresizingMaskIntoConstraints = false
         
         
-        self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Width, multiplier: 1.0, constant: 0)
+        self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Width, multiplier: self.widthMultiplier, constant: 0)
         let constHeight = NSLayoutConstraint(item: gameView, attribute: .Height, relatedBy: .Equal, toItem: gameView, attribute: .Width, multiplier: 1.0, constant: 0)
         let constCenterX = NSLayoutConstraint(item: gameView, attribute: .CenterX, relatedBy: .Equal, toItem: self.view, attribute: .CenterX, multiplier: 1.0, constant: 0)
         let constCenterY = NSLayoutConstraint(item: gameView, attribute: .CenterY, relatedBy: .Equal, toItem: self.view, attribute: .CenterY, multiplier: 1.0, constant: 0)
@@ -32,9 +32,9 @@ class ViewController: UIViewController {
         
         self.view.removeConstraint(constWidth) // <-
         if toInterfaceOrientation.isPortrait {
-            self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Width, multiplier: 1.0, constant: 0)
+            self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Width, multiplier: self.widthMultiplier, constant: 0)
         } else {
-            self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Height, multiplier: 1.0, constant: 0)
+            self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Height, multiplier: self.widthMultiplier, constant: 0)
         }
         self.view.addConstraint(self.constWidth) // <-
         //nasledujuci call nic neurobi, remove a add do pola constraintov ano??

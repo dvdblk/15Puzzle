@@ -27,7 +27,7 @@ class SmallView: UIView {
         numberLabel.textAlignment = .Center
         numberLabel.text = "\(number)"
         numberLabel.textColor = UIColor.whiteColor()
-        numberLabel.font = UIFont.systemFontOfSize(25)
+        numberLabel.font = UIFont.systemFontOfSize(frame.size.width/3.65)
         addSubview(numberLabel)
         numberLabel.translatesAutoresizingMaskIntoConstraints = false
         let constCenterX = NSLayoutConstraint(item: numberLabel, attribute: .CenterX, relatedBy: .Equal, toItem: self, attribute: .CenterX, multiplier: 1, constant: 0)
