@@ -21,7 +21,7 @@ class SmallView: UIView {
         self.number = num
         super.init(frame: tempFrame)
         self.layer.borderWidth = 1
-        self.backgroundColor = UIColor.blueColor()
+        self.backgroundColor = UIColor(red: 55/255, green: 125/255, blue: 235/255, alpha: 1)
         self.layer.borderColor = UIColor.blackColor().CGColor
         let numberLabel = UILabel()
         numberLabel.textAlignment = .Center

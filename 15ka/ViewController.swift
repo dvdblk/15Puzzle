@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     let widthMultiplier: CGFloat = 0.95
     
     override func viewDidLoad() {
-        gameView = GameView(withGameSize: 4)
+        gameView = GameView(withGameSize: 3)
         self.view.addSubview(gameView)
         gameView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -30,13 +30,13 @@ class ViewController: UIViewController {
     
     override func willRotateToInterfaceOrientation(toInterfaceOrientation: UIInterfaceOrientation, duration: NSTimeInterval) {
         
-        self.view.removeConstraint(constWidth) // <-
+        self.view.removeConstraint(constWidth) // <----
         if toInterfaceOrientation.isPortrait {
             self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Width, multiplier: self.widthMultiplier, constant: 0)
         } else {
             self.constWidth = NSLayoutConstraint(item: gameView, attribute: .Width, relatedBy: .Equal, toItem: self.view, attribute: .Height, multiplier: self.widthMultiplier, constant: 0)
         }
-        self.view.addConstraint(self.constWidth) // <-
+        self.view.addConstraint(self.constWidth) // <----
         //nasledujuci call nic neurobi, remove a add do pola constraintov ano??
         //self.view.setNeedsUpdateConstraints()
     }
