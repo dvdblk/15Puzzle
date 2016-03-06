@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     let widthMultiplier: CGFloat = 0.95
     
     override func viewDidLoad() {
-        gameView = GameView(withGameSize: 3)
+        gameView = GameView(withGameSize: 2)
         self.view.addSubview(gameView)
         gameView.translatesAutoresizingMaskIntoConstraints = false
         

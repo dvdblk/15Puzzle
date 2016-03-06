@@ -88,7 +88,8 @@ class GameView: UIView {
         // check if inversion count corresponds to gameSize parity
         let inversionEven = calculateInversionCount(shuffledNumberArray) % 2 == 0
         let widthEven = gameSize % 2 == 0
-        if  (!widthEven && !inversionEven) || (widthEven && inversionEven) {
+        if  (!widthEven && !inversionEven) || (widthEven && !inversionEven) {
+            print("swapped")
             swap(&shuffledNumberArray[0], &shuffledNumberArray[1])
         }
         
@@ -114,12 +115,14 @@ class GameView: UIView {
         for i in 0..<self.smallViewArray.count {
             tempCurrentArr.append(self.smallViewArray[i].number)
         }
+        print(tempCurrentArr, tempCorrectArr)
         if tempCorrectArr == tempCurrentArr {
             /*let alertController = UIAlertController(title: "Game Won!", message: "You've solved the puzzle in \(numberOfMoves) moves.", preferredStyle: .Alert)
             let okAction = UIAlertAction(title: "OK", style: .Default, handler: { [unowned self] _ in
                 self.createRandomArrayOfViews()
             })
             alertController.addAction(okAction)*/
+            print("game won!!")
         }
     }
     
@@ -159,11 +162,12 @@ class GameView: UIView {
                 if self.smallViewArray[i].number == tempSelectedView.number {
                     self.smallViewArray.removeAtIndex(i)
                     var newIndex: Int
-                    if self.ratio > 0 {
+                    if self.ratio >= 0 {
                         newIndex = i+self.gameSize-1
                     } else {
                         newIndex = i-self.gameSize+1
                     }
+                    print(newIndex)
                     self.smallViewArray.insert(tempSelectedView, atIndex: newIndex)
                     break;
                 }
@@ -238,10 +242,14 @@ class GameView: UIView {
     func touchGesture(rec: UITapGestureRecognizer) {
         self.handleTap(rec)
         if let tempSelectedView = self.selectedView as SmallView? {
-            self.handleFinalPosition(tempSelectedView)
-            tempSelectedView.moveableX = false
-            tempSelectedView.moveableY = false
-            self.ratio = 0
+            let moveable = tempSelectedView.moveableX || tempSelectedView.moveableY
+            if moveable {
+                if self.blankPosition.y < tempSelectedView.position.y { self.ratio = -1 }
+                self.handleFinalPosition(tempSelectedView)
+                tempSelectedView.moveableX = false
+                tempSelectedView.moveableY = false
+                self.ratio = 0
+            }
         }
     }
     
