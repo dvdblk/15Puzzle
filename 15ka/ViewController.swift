@@ -15,6 +15,7 @@ class ViewController: UIViewController, GameViewDelegate {
     let widthMultiplier: CGFloat = 0.95
     
     override func viewDidLoad() {
+        self.view.backgroundColor = UIColor.whiteColor()
         gameView = GameView(withGameSize: 4)
         gameView.delegate = self
         self.view.addSubview(gameView)
