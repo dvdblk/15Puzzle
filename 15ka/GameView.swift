@@ -13,10 +13,15 @@ import GameplayKit
 
 typealias Position = (x: Int, y: Int)
 
+protocol GameViewDelegate {
+    func userDidWin(moves: Int)
+}
+
 class GameView: UIView {
 
     let gameSize: Int
     let padding: CGFloat
+    var delegate: GameViewDelegate!
     
     var singleSmallViewFrame: CGFloat!
     var singleSmallViewFrameWithPadding: CGFloat {
@@ -28,6 +33,7 @@ class GameView: UIView {
     var selectedView: SmallView?
     var touchPoint: CGPoint!
     var ratio: CGFloat = 0.0
+    var moves: Int = 0
     
     init(withGameSize gs: Int, withPadding padd: CGFloat = 2.0) {
         self.gameSize = gs
@@ -54,10 +60,10 @@ class GameView: UIView {
         self.subviews.forEach({ $0.removeFromSuperview() })
         self.selectedView = nil
         self.ratio = 0.0
+        self.moves = 0
     }
     
     func createRandomArrayOfViews() {
-        
         // returns inversion count for a smallView
         func calculateInversionCount(arrayToCount: [Int]) -> Int {
             func inversionForSmallView(atIndex startIndex: Int) -> Int {
@@ -85,11 +91,10 @@ class GameView: UIView {
         }
         var shuffledNumberArray = GKRandomSource.sharedRandom().arrayByShufflingObjectsInArray(numberArray) as! [Int]
         
-        // check if inversion count corresponds to gameSize parity
+        // check if inversion count corresponds to gameSize parity (to make puzzle solvable everytime)
         let inversionEven = calculateInversionCount(shuffledNumberArray) % 2 == 0
         let widthEven = gameSize % 2 == 0
         if  (!widthEven && !inversionEven) || (widthEven && !inversionEven) {
-            print("swapped")
             swap(&shuffledNumberArray[0], &shuffledNumberArray[1])
         }
         
@@ -107,22 +112,15 @@ class GameView: UIView {
     }
     
     func checkIfCorrectSequence() {
-        var tempCorrectArr: [Int] = []
-        var tempCurrentArr: [Int] = []
+        var tempCorrectArray: [Int] = []
+        var tempCurrentArray: [Int] = []
         for i in 1..<gameSize*gameSize {
-            tempCorrectArr.append(i)
+            tempCorrectArray.append(i)
         }
-        for i in 0..<self.smallViewArray.count {
-            tempCurrentArr.append(self.smallViewArray[i].number)
-        }
-        print(tempCurrentArr, tempCorrectArr)
-        if tempCorrectArr == tempCurrentArr {
-            /*let alertController = UIAlertController(title: "Game Won!", message: "You've solved the puzzle in \(numberOfMoves) moves.", preferredStyle: .Alert)
-            let okAction = UIAlertAction(title: "OK", style: .Default, handler: { [unowned self] _ in
-                self.createRandomArrayOfViews()
-            })
-            alertController.addAction(okAction)*/
-            print("game won!!")
+        self.smallViewArray.forEach({ tempCurrentArray.append($0.number) })
+        
+        if tempCorrectArray == tempCurrentArray {
+            self.delegate!.userDidWin(self.moves)
         }
     }
     
@@ -167,20 +165,18 @@ class GameView: UIView {
                     } else {
                         newIndex = i-self.gameSize+1
                     }
-                    print(newIndex)
                     self.smallViewArray.insert(tempSelectedView, atIndex: newIndex)
                     break;
                 }
             }
         }
         
-        // swap blankPosition/selected smallView position and check if player has won if new blankPos is in the bottom right corner
-        
+        // swap blankPosition with selected smallView position and check if player has won if new blankPos is in the bottom right corner
         let tempBlankPos = self.blankPosition
         self.blankPosition = tempSelectedView.position
         tempSelectedView.position = tempBlankPos
-        
         tempSelectedView.originalFrame = tempSelectedView.frame
+        self.moves++
         
         if self.blankPosition.x == self.gameSize-1 && self.blankPosition.y == self.gameSize-1 {
             self.checkIfCorrectSequence()
@@ -244,6 +240,7 @@ class GameView: UIView {
         if let tempSelectedView = self.selectedView as SmallView? {
             let moveable = tempSelectedView.moveableX || tempSelectedView.moveableY
             if moveable {
+                // set direction if moving vertically...
                 if self.blankPosition.y < tempSelectedView.position.y { self.ratio = -1 }
                 self.handleFinalPosition(tempSelectedView)
                 tempSelectedView.moveableX = false

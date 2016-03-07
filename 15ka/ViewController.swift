@@ -8,14 +8,15 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, GameViewDelegate {
 
     var gameView: GameView!
     var constWidth: NSLayoutConstraint!
     let widthMultiplier: CGFloat = 0.95
     
     override func viewDidLoad() {
-        gameView = GameView(withGameSize: 2)
+        gameView = GameView(withGameSize: 4)
+        gameView.delegate = self
         self.view.addSubview(gameView)
         gameView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -39,6 +40,15 @@ class ViewController: UIViewController {
         self.view.addConstraint(self.constWidth) // <----
         //nasledujuci call nic neurobi, remove a add do pola constraintov ano??
         //self.view.setNeedsUpdateConstraints()
+    }
+    
+    func userDidWin(score: Int) {
+        let alertController = UIAlertController(title: "Game Won!", message: "You've solved the puzzle in \(score) moves.", preferredStyle: .Alert)
+        let okAction = UIAlertAction(title: "Play again!", style: .Default, handler: { _ in
+        self.gameView.createRandomArrayOfViews()
+        })
+        alertController.addAction(okAction)
+        presentViewController(alertController, animated: true, completion: nil)
     }
 }
 
